@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:clima/services/location.dart';
 import 'package:clima/services/networking.dart';
-import 'package:clima/utilities/constants.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:clima/screens/location_screen.dart';
 
 class LoadingScreen extends StatefulWidget {
   @override
@@ -10,29 +10,23 @@ class LoadingScreen extends StatefulWidget {
 }
 
 class _LoadingScreenState extends State<LoadingScreen> {
-  double? latitude;
-  double? longitude;
-
   @override
   void initState() {
     super.initState();
-    // getCurrentLocation();
+    getCurrentLocation();
   }
 
   void getCurrentLocation() async {
     Location location = Location();
     await location.getLocation();
-    latitude = location.latitude;
-    longitude = location.longitude;
 
-    NetworkHelper networkHelper = NetworkHelper(
-        'https://api.openweathermap.org/data/2.5/weather?lat=$latitude.34&lon=$longitude.99&appid=$apiKey');
+    NetworkHelper networkHelper = await NetworkHelper(
+        'https://api.openweathermap.org/data/2.5/weather?lat=${location.latitude}&lon=${location.longitude}&appid=7bba544d21031439d2242f529ed44f92&units=metric');
     dynamic decodedData = await networkHelper.getData();
 
-    double temperature = decodedData['main']['temp'];
-    print(temperature);
-    print(latitude);
-    print(longitude);
+    Navigator.push(context, MaterialPageRoute(builder: (context) {
+      return LocationScreen(weatherData: decodedData);
+    }));
   }
 
   @override
@@ -54,10 +48,10 @@ class _LoadingScreenState extends State<LoadingScreen> {
               color: Colors.white,
               size: 50.0,
             ),
-            ElevatedButton(
-              onPressed: getCurrentLocation,
-              child: Text('Get Location'),
-            ),
+            // ElevatedButton(
+            //   onPressed: getCurrentLocation,
+            //   child: Text('Get Location'),
+            // ),
           ],
         ),
       ),
