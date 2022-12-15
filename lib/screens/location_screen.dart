@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:clima/utilities/constants.dart';
 import 'city_screen.dart';
 import 'package:clima/services/weather.dart';
+import 'loading_screen.dart';
 
 class LocationScreen extends StatefulWidget {
   LocationScreen({this.weatherData});
@@ -12,12 +13,12 @@ class LocationScreen extends StatefulWidget {
 }
 
 class _LocationScreenState extends State<LocationScreen> {
+  WeatherModel weather = WeatherModel();
   late int temperature;
   late int condition;
   late String cityName;
   late String message;
   late String weatherIcon;
-  WeatherModel weatherModel = WeatherModel();
 
   @override
   void initState() {
@@ -28,12 +29,18 @@ class _LocationScreenState extends State<LocationScreen> {
 
   void updateUI(dynamic weatherData) {
     setState(() {
+      // if (weatherData == null) {
+      //   weatherIcon = 'Error';
+      //   message = 'Can\'t find weather data';
+      //   cityName = 'City';
+      //   return;
+      // }
       double temp = weatherData['main']['temp'];
       temperature = temp.toInt();
       condition = weatherData['weather'][0]['id'];
       cityName = weatherData['name'];
-      message = weatherModel.getMessage(temperature);
-      weatherIcon = weatherModel.getWeatherIcon(condition);
+      message = weather.getMessage(temperature);
+      weatherIcon = weather.getWeatherIcon(condition);
     });
   }
 
@@ -51,58 +58,72 @@ class _LocationScreenState extends State<LocationScreen> {
         ),
         constraints: BoxConstraints.expand(),
         child: SafeArea(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: <Widget>[
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: <Widget>[
-                  MaterialButton(
-                    onPressed: () {},
-                    child: Icon(
-                      Icons.near_me,
-                      size: 45.0,
-                    ),
-                  ),
-                  MaterialButton(
-                    onPressed: () {
-                      Navigator.push(context,
-                          MaterialPageRoute(builder: (context) {
-                        return CityScreen();
-                      }));
-                    },
-                    child: Icon(
-                      Icons.location_city,
-                      size: 45.0,
-                    ),
-                  ),
-                ],
-              ),
-              Padding(
-                padding: EdgeInsets.only(left: 15.0),
-                child: Row(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 15),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
-                    Text(
-                      '$temperature°',
-                      style: kTempTextStyle,
+                    MaterialButton(
+                      onPressed: () async {
+                        dynamic weatherData =
+                            await weather.getLocationWeather();
+                        updateUI(weatherData);
+                      },
+                      child: Icon(
+                        Icons.near_me,
+                        size: 45.0,
+                      ),
                     ),
-                    Text(
-                      '$weatherIcon',
-                      style: kConditionTextStyle,
+                    MaterialButton(
+                      onPressed: () async {
+                        String typedName = await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) {
+                              return CityScreen();
+                            },
+                          ),
+                        );
+                        dynamic weatherData =
+                            await WeatherModel().getCityWeatherData(typedName);
+                        updateUI(weatherData);
+                      },
+                      child: Icon(
+                        Icons.location_city,
+                        size: 45.0,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Padding(
-                padding: EdgeInsets.only(right: 15.0),
-                child: Text(
-                  "$message in $cityName!",
-                  textAlign: TextAlign.right,
-                  style: kMessageTextStyle,
+                Padding(
+                  padding: EdgeInsets.only(left: 15.0),
+                  child: Row(
+                    children: <Widget>[
+                      Text(
+                        '$temperature°',
+                        style: kTempTextStyle,
+                      ),
+                      Text(
+                        '$weatherIcon',
+                        style: kConditionTextStyle,
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+                Padding(
+                  padding: EdgeInsets.only(right: 15.0),
+                  child: Text(
+                    "$message in $cityName!",
+                    textAlign: TextAlign.right,
+                    style: kMessageTextStyle,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
